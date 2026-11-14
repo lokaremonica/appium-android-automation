@@ -118,7 +118,7 @@ stable yet, so npm picked the newest version compatible with our 3.9.0 server).
   connection-retry settings (bumped to `connectionRetryCount: 10` /
   `connectionRetryTimeout: 2000` because Appium takes a few seconds to finish
   starting up before it accepts connections).
-- `test/specs/settings.spec.js` — first test: waits for a known element in the
+- `test/settings/specs/settings.spec.js` — first test: waits for a known element in the
   Settings app and asserts it's displayed.
 - `.gitignore` — excludes `node_modules/` and `logs/`.
 
@@ -133,3 +133,34 @@ stable yet, so npm picked the newest version compatible with our 3.9.0 server).
   falls back to another method.
 - The emulator is memory-hungry; it can get killed by the OS under memory
   pressure and needs restarting (`emulator -avd Pixel_6_API_34 ...` from step 2).
+
+## Project structure
+
+```
+test/
+  settings/               # Android's built-in Settings app (native, preinstalled)
+    pageobjects/          #   settings.page.js — locators + actions for Settings screens
+    specs/                #   settings, network, search, about, display
+  apidemos/               # ApiDemos (native, installed from an APK)
+    pageobjects/          #   apidemos.page.js — locators + gestures (drag, drop, seek bar)
+    specs/                #   apidemos.spec.js — drag & drop, checkbox, seek bar, image
+apps/                     # app binaries under test (gitignored — download below)
+screenshots/              # failure screenshots, written by the afterTest hook (gitignored)
+```
+
+Both apps are **native** Android apps (built from Android UI widgets, automated
+via UiAutomator2). Folders are named by app under test; a future mobile-web or
+hybrid (WebView) suite would get its own folder alongside these.
+
+Run everything with `npm test`, or one group with `npm run test:settings` / `npm run test:apidemos`.
+
+### Installing the ApiDemos APK (needed for `test:apidemos`)
+
+ApiDemos is Google's Android API sample app, packaged by the Appium team as a
+standard automation practice target (https://github.com/appium/android-apidemos).
+
+```
+mkdir -p apps
+curl -fL -o apps/ApiDemos-debug.apk https://github.com/appium/android-apidemos/releases/download/v6.0.18/ApiDemos-debug.apk
+adb install -r apps/ApiDemos-debug.apk
+```
