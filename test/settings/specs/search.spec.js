@@ -7,10 +7,14 @@ describe('Android Settings search', () => {
     await settingsPage.launchFresh()
   })
 
-  it('should show results when searching for "battery"', async () => {
-    await settingsPage.searchFor('battery')
+  // A regular `function` (not an arrow) so we can use `this.timeout()`: on a fresh CI
+  // emulator the search index may take up to ~90s to be built, longer than the
+  // 60s default per-test timeout in wdio.conf.js.
+  it('should show results when searching for "battery"', async function () {
+    this.timeout(150000)
 
-    await settingsPage.searchResultsList.waitForDisplayed({ timeout: 10000 })
-    expect(await settingsPage.searchResultsList.isDisplayed()).toBe(true)
+    await settingsPage.searchUntilResults('battery')
+
+    await expect(settingsPage.searchResultsList).toBeDisplayed()
   })
 })

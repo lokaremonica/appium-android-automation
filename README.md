@@ -1,5 +1,7 @@
 # Mobile Test Automation Framework (Appium + WebdriverIO)
 
+[![Android E2E tests](https://github.com/lokaremonica/appium-android-automation/actions/workflows/android-e2e.yml/badge.svg?branch=main)](https://github.com/lokaremonica/appium-android-automation/actions/workflows/android-e2e.yml)
+
 End-to-end UI test automation for **native Android apps**, built with **Appium 3**,
 **WebdriverIO 10** and the **Page Object Model**, with **Allure** reports that include
 a video, a screenshot and (on failure) the UI tree for every test.
@@ -38,6 +40,8 @@ Both are **native** apps: their UI is built from Android widgets (`android.widge
 
 ```
 Mobile-test/
+├── .github/workflows/
+│   └── android-e2e.yml           # CI: boots an Android 14 emulator, runs the suite, uploads the Allure report
 ├── wdio.conf.js                  # Runner config: capabilities, suites, Appium service, evidence hooks
 ├── package.json                  # Dependencies and npm scripts
 ├── test/
@@ -181,6 +185,24 @@ video for failed tests only: wrap the attach in `if (!passed)` (marked in the co
 
 ---
 
+## Continuous integration
+
+[`.github/workflows/android-e2e.yml`](.github/workflows/android-e2e.yml) runs the full suite
+on every push and pull request to `main`:
+
+1. Ubuntu runner with KVM enabled, Node 22 and JDK 17, then `npm ci`
+2. Downloads the ApiDemos APK
+3. Boots an **Android 14 (API 34, google_apis, x86_64) emulator** with
+   `reactivecircus/android-emulator-runner`, with animations disabled, installs the APK and runs `npm test`
+4. Always uploads the **Allure report** (videos and screenshots) as a build artifact. On
+   failure, it also uploads failure screenshots and Appium logs.
+
+**Quality gate:** `main` is branch-protected. A pull request can't be merged until the
+check **"Appium tests (Android 14 emulator)"** passes. A full run takes about 6 minutes
+(about 3.5 of them running tests).
+
+---
+
 ## AI-assisted testing (Appium MCP)
 
 `.mcp.json` registers the **Appium MCP** server, so an AI assistant (Claude Code) can
@@ -215,7 +237,7 @@ A mobile-web or hybrid suite would go in its own folder next to `settings/` and 
 
 ## Challenges and lessons
 
-[`CHALLENGES.md`](CHALLENGES.md) is a running log of 12 real problems hit while building
+[`CHALLENGES.md`](CHALLENGES.md) is a running log of 13 real problems hit while building
 this, each with symptom, diagnosis, fix and lesson. Highlights:
 
 - **IPv4 vs. IPv6:** `localhost` resolved to `::1` while the client used `127.0.0.1` (#4)
@@ -224,13 +246,14 @@ this, each with symptom, diagnosis, fix and lesson. Highlights:
 - **Flaky race condition:** a tap swallowed by a still-scrolling list, found from a
   failure screenshot after two wrong hypotheses were ruled out (#9)
 - **Report evidence:** building video + screenshot + UI-tree capture for Allure (#12)
+- **Passes locally, fails on CI:** a fresh emulator's Settings search index wasn't built yet (#13)
 
 ---
 
 ## Roadmap
 
-- [ ] CI pipeline (GitHub Actions with an Android emulator) with a quality gate that
-      blocks merges when tests fail
+- [x] CI pipeline (GitHub Actions with an Android emulator) with a quality gate that
+      blocks merges when tests fail (see [Continuous integration](#continuous-integration))
 - [ ] iOS coverage with the XCUITest driver, reusing the same Page Object pattern
 - [ ] Hybrid / WebView example with context switching
 - [ ] Comparison suites in Espresso (Android) and XCTest (iOS), the native in-process frameworks
