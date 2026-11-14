@@ -69,6 +69,29 @@ class SettingsPage {
     await this.searchInput.setValue(query)
   }
 
+  // Search, and keep re-submitting until results appear.
+  //
+  // Why: Settings search reads from an index that Android builds in the background
+  // some time after a device's FIRST boot. A fresh CI emulator can be searched before
+  // that index exists and shows "No results". On a warm device the first attempt
+  // succeeds, so this costs nothing locally. If search is genuinely broken, it still
+  // fails, with a message saying what it waited for.
+  async searchUntilResults(query, { timeout = 90000 } = {}) {
+    await this.searchFor(query)
+    await browser.waitUntil(
+      async () => {
+        if (await this.searchResultsList.isDisplayed()) return true
+        await this.searchInput.setValue(query) // re-submit: clears the field and types again
+        return this.searchResultsList.waitForDisplayed({ timeout: 3000 }).catch(() => false)
+      },
+      {
+        timeout,
+        interval: 2000,
+        timeoutMsg: `No search results for "${query}" after ${timeout / 1000}s (settings search index never became ready)`,
+      }
+    )
+  }
+
   // ---------- About device (scrolling + reading text) ----------
 
   async openAboutDevice() {

@@ -262,3 +262,35 @@ Common CI practice is to keep video only for failures — a one-line change
 
 **Lesson:** A test report is only as good as the evidence you deliberately
 capture. Build the "trace" for mobile from video + screenshots + UI tree.
+
+---
+
+### 13. Search test passed locally but failed on CI — fresh device, empty search index
+
+**Symptom:** First CI run: 11/12 green. The search test failed with
+`list_results still not displayed after 10000ms`. It had never failed locally.
+
+**Diagnosis:** Downloaded the `failure-evidence` artifact from the CI run. The
+failure screenshot showed "battery" typed correctly and the message **"No results
+for battery"**. So locators and taps were fine — search ran, but returned nothing.
+Root cause: Settings search reads from an index Android builds **in the background
+some time after a device's first boot**. The local emulator had been running for
+days (index ready); the CI emulator is created fresh minutes before the tests
+(index still empty).
+
+**Fix:** `searchUntilResults()` in the Settings page object re-submits the query
+until results appear (bounded at 90s, with a timeout message naming the
+condition). The test raises its own Mocha timeout to 150s with `this.timeout()`,
+since the suite default is 60s. On a warm device the first attempt succeeds, so
+local runs are unaffected.
+
+**Trade-off:** if search were genuinely broken, the test now takes ~90s to fail
+instead of 10s. Acceptable: it still fails, with a precise message. Not used: a
+blanket "retry the whole test" setting, which would hide this kind of
+environment difference instead of naming it.
+
+**Lesson:** "Passes locally, fails on CI" is usually an environment difference,
+not a flaky test. CI devices are *fresh* every run: anything that relies on a
+warmed-up device (indexes, caches, first-run dialogs) must be an explicit,
+named precondition. Having CI upload failure screenshots turned this into a
+5-minute diagnosis.
