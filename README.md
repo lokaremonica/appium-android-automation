@@ -40,6 +40,8 @@ Both are **native** apps: their UI is built from Android widgets (`android.widge
 
 ```
 Mobile-test/
+├── .github/workflows/
+│   └── android-e2e.yml           # CI: boots an Android 14 emulator, runs the suite, uploads the Allure report
 ├── wdio.conf.js                  # Runner config: capabilities, suites, Appium service, evidence hooks
 ├── package.json                  # Dependencies and npm scripts
 ├── test/
